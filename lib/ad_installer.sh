@@ -117,44 +117,27 @@ install_developer_fonts() {
 configure_terminator() {
     if command -v terminator &> /dev/null; then
         info "正在为 Terminator 注入 AD 极简透明暗黑主题与 JetBrains 字体绑定 ..."
-        mkdir -p "$HOME/.config/terminator"
         
-        # 为了不覆盖用户可能非常复杂的自定义快捷键，仅当文件不存在时进行全量写入
-        if [ ! -f "$HOME/.config/terminator/config" ]; then
-cat << 'EOF' > "$HOME/.config/terminator/config"
-[global_config]
-  title_transmit_bg_color = "#394149"
-  title_receive_bg_color = "#2c2c2c"
-  title_inactive_bg_color = "#202020"
-  window_state = maximise
-  suppress_multiple_term_dialog = True
-[keybindings]
-[profiles]
-  [[default]]
-    background_color = "#1e1e1e"
-    background_darkness = 0.85
-    background_type = transparent
-    cursor_color = "#aaaaaa"
-    cursor_shape = ibeam
-    font = JetBrains Mono NL 11
-    foreground_color = "#cccccc"
-    show_titlebar = False
-    scrollbar_position = hidden
-    use_system_font = False
-    palette = "#000000:#cd3131:#0dbc79:#e5e510:#2472c8:#bc3fbc:#11a8cd:#e5e5e5:#666666:#f14c4c:#23d18b:#f5f543:#3b8eea:#d670d6:#29b8db:#e5e5e5"
-[layouts]
-  [[default]]
-    [[[window0]]]
-      type = Window
-      parent = ""
-    [[[child1]]]
-      type = Terminal
-      parent = window0
-[plugins]
-EOF
+        # 使用 ad_installer.sh 所在目录的 ../conf/terminator.config
+        local SCRIPT_REAL_DIR
+        SCRIPT_REAL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        local TERMINATOR_CONF_SRC="${SCRIPT_REAL_DIR}/../conf/terminator.config"
+        local TERMINATOR_CONF_DST="$HOME/.config/terminator/config"
+        
+        if [ -f "$TERMINATOR_CONF_SRC" ]; then
+            # 如果旧配置已存在，先备份一份
+            if [ -f "$TERMINATOR_CONF_DST" ]; then
+                cp "$TERMINATOR_CONF_DST" "${TERMINATOR_CONF_DST}.bak_$(date +%Y%m%d%H%M)" && \
+                echo "  -> [备份] 旧 terminator 配置已备份至 ${TERMINATOR_CONF_DST}.bak_*"
+            fi
+            mkdir -p "$HOME/.config/terminator"
+            cp "$TERMINATOR_CONF_SRC" "$TERMINATOR_CONF_DST"
+            echo "  -> [成功] Terminator 主题已写入 $TERMINATOR_CONF_DST"
         else
-            echo "  -> [跳过] ~/.config/terminator/config 已存在，为防止覆盖您的私人键位配置，放弃全自动主题注入。"
+            warn "conf/terminator.config 源文件不存在，跳过主题注入： $TERMINATOR_CONF_SRC"
         fi
+    else
+        warn "Terminator 未安装，跳过主题注入。"
     fi
 }
 
