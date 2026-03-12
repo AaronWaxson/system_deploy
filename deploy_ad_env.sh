@@ -19,6 +19,12 @@ source "$SCRIPT_DIR/lib/ad_installer.sh"
 # 绑定错误捕捉框架
 setup_error_trap
 
+# macOS 安全守卫：此脚本仅适用于 Linux/Ubuntu
+if [ "$(uname -s)" = "Darwin" ]; then
+    warn "deploy_ad_env.sh 仅适用于 Linux/Ubuntu 系统。macOS 请使用 deploy_mac_env.sh。"
+    exit 0
+fi
+
 echo "=============================================="
 echo " 🚀 开始部署全能工作站核心环境..."
 echo "=============================================="

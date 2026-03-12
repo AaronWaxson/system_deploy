@@ -177,8 +177,21 @@ install_python_ml_toolchain() {
     fi
     
     if [ ! -d "$HOME/miniconda3" ]; then
+        local os_name arch miniconda_url
+        os_name=$(uname -s)
+        arch=$(uname -m)
+        if [ "$os_name" = "Darwin" ]; then
+            if [ "$arch" = "arm64" ]; then
+                miniconda_url="https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh"
+            else
+                miniconda_url="https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
+            fi
+        else
+            miniconda_url="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+        fi
+        
         mkdir -p ~/miniconda3
-        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh || true
+        wget "$miniconda_url" -O ~/miniconda3/miniconda.sh || true
         bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3 || warn "Miniconda 安装遇到错误"
         rm ~/miniconda3/miniconda.sh
         # 自动初始化 conda

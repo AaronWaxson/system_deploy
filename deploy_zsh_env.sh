@@ -31,7 +31,7 @@ if [ "$OS" = "Linux" ]; then
     sudo apt-get update -y || warn "apt-get update 失败，但我们将继续尝试安装。"
     sudo apt-get install -y zsh curl git unzip fzf zoxide bat || warn "包安装失败..."
     sudo apt-get install -y eza || true
-    elif [ "$OS" = "Darwin" ]; then
+elif [ "$OS" = "Darwin" ]; then
     if ! command -v brew &> /dev/null; then
         info "未检测到 Homebrew，开始安装 Homebrew (macOS 包管理器)..."
         export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git"
@@ -40,7 +40,7 @@ if [ "$OS" = "Linux" ]; then
         /bin/bash -c "$(curl -fsSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || warn "Homebrew 安装脚本当中遇到网络限制。"
     fi
     info "正在使用 brew 安装核心依赖..."
-    brew install zsh curl git fzf zoxide bat eza
+    brew install zsh curl git unzip fzf zoxide bat eza
 fi
 
 # 2. 安装核心视觉提示符
