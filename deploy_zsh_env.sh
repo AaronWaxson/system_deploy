@@ -32,11 +32,14 @@ if [ "$OS" = "Linux" ]; then
     sudo apt-get install -y zsh curl git unzip fzf zoxide bat || warn "包安装失败..."
     sudo apt-get install -y eza || true
 elif [ "$OS" = "Darwin" ]; then
+    # 🔑 全局配置清华镜像源 (安装 + 后续所有 brew install 均走镜像)
+    export HOMEBREW_API_DOMAIN="https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/api"
+    export HOMEBREW_BOTTLE_DOMAIN="https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles"
+    export HOMEBREW_BREW_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/brew.git"
+    export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git"
+    
     if ! command -v brew &> /dev/null; then
         info "未检测到 Homebrew，开始安装 Homebrew (macOS 包管理器)..."
-        export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git"
-        export HOMEBREW_BREW_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/brew.git"
-        export HOMEBREW_API_DOMAIN="https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/api"
         /bin/bash -c "$(curl -fsSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || warn "Homebrew 安装脚本当中遇到网络限制。"
     fi
     info "正在使用 brew 安装核心依赖与 Zsh 插件 (brew-native 方案)..."

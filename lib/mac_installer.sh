@@ -3,17 +3,26 @@
 # Domain Logic: macOS Developer Tools Installer (对标 Linux 的 ad_installer.sh)
 # ==============================================================================
 
+# [全局] 配置 Homebrew 清华镜像源 (加速 brew install / brew update)
+configure_brew_mirrors() {
+    export HOMEBREW_API_DOMAIN="https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/api"
+    export HOMEBREW_BOTTLE_DOMAIN="https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles"
+    export HOMEBREW_BREW_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/brew.git"
+    export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git"
+    info "已配置 Homebrew 清华镜像源 (API + Bottles + Git)"
+}
+
 # [阶段0] 确保 Homebrew 可用
 ensure_homebrew() {
+    # 🔑 无论是否已安装，都先激活清华镜像
+    configure_brew_mirrors
+    
     if command -v brew &> /dev/null; then
         echo "  -> [跳过] Homebrew 已安装"
         return 0
     fi
     
     info "未检测到 Homebrew，开始安装 (使用清华镜像加速)..."
-    export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git"
-    export HOMEBREW_BREW_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/brew.git"
-    export HOMEBREW_API_DOMAIN="https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/api"
     /bin/bash -c "$(curl -fsSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || {
         warn "Homebrew 安装脚本遇到网络限制，尝试直接安装..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || {

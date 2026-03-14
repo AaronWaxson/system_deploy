@@ -84,6 +84,14 @@ export HISTSIZE=100000
 export SAVEHIST=100000
 setopt appendhistory share_history hist_ignore_all_dups inc_append_history
 
+# ---------- Homebrew 清华镜像源 (永久生效) ----------
+if [ "$(uname -s)" = "Darwin" ]; then
+    export HOMEBREW_API_DOMAIN="https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/api"
+    export HOMEBREW_BOTTLE_DOMAIN="https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles"
+    export HOMEBREW_BREW_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/brew.git"
+    export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/homebrew-core.git"
+fi
+
 # ---------- 自动补全系统 ----------
 # macOS brew-native zsh-completions 支持
 if [ -d "$(brew --prefix 2>/dev/null)/share/zsh-completions" ]; then

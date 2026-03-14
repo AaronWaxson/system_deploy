@@ -29,6 +29,13 @@ MAC_GUI_APPS=(
     microsoft-edge
     warp
     zotero
+    joplin
+    uv
+    cheat
+    fd
+    bat
+    exa
+    tldr
 )
 
 # 开发字体 (via brew cask — Nerd Font 变体包含终端图标支持)
