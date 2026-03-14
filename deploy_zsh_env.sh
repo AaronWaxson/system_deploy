@@ -39,8 +39,12 @@ elif [ "$OS" = "Darwin" ]; then
         export HOMEBREW_API_DOMAIN="https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/api"
         /bin/bash -c "$(curl -fsSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || warn "Homebrew 安装脚本当中遇到网络限制。"
     fi
-    info "正在使用 brew 安装核心依赖..."
-    brew install zsh curl git unzip fzf zoxide bat eza
+    info "正在使用 brew 安装核心依赖与 Zsh 插件 (brew-native 方案)..."
+    brew install zsh curl git unzip fzf zoxide bat eza starship
+    # brew-native Zsh 插件 (比 git clone 更纯净、启动更快)
+    brew install zsh-autosuggestions zsh-syntax-highlighting zsh-completions
+    # 配置 fzf 快捷键绑定 (Ctrl+R 等)
+    "$(brew --prefix)/opt/fzf/install" --all --no-bash --no-fish > /dev/null 2>&1 || true
 fi
 
 # 2. 安装核心视觉提示符

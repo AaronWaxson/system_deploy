@@ -31,9 +31,9 @@ MAC_GUI_APPS=(
     zotero
 )
 
-# 开发字体 (via brew cask, homebrew/cask-fonts tap)
+# 开发字体 (via brew cask — Nerd Font 变体包含终端图标支持)
 MAC_DEVELOPER_FONTS=(
-    font-fira-code
+    font-fira-code-nerd-font
     font-jetbrains-mono
     font-maple-mono-nf
 )

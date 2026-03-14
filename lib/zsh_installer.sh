@@ -1,6 +1,7 @@
 #!/bin/bash
 # ==============================================================================
 # Domain Logic: Advanced Zsh Productivity Environment Installer
+# 跨平台支持：Linux (git-clone 插件) / macOS (brew-native 插件)
 # ==============================================================================
 
 # OS 检测
@@ -23,9 +24,17 @@ install_starship() {
     fi
 }
 
-# 拉取 Zsh 插件
+# 拉取 Zsh 插件 (Linux: git clone / macOS: 已在 deploy_zsh_env.sh 中通过 brew 安装)
 install_zsh_plugins() {
-    info "拉取 Zsh 生产力加速插件..."
+    local os
+    os=$(detect_os)
+    
+    if [ "$os" = "Darwin" ]; then
+        echo "  -> [跳过] macOS 使用 brew-native 插件方案，已在阶段 1 安装完毕。"
+        return 0
+    fi
+    
+    info "拉取 Zsh 生产力加速插件 (git-clone 方案)..."
     ZSH_PLUGIN_DIR="$HOME/.zsh/plugins"
     mkdir -p "$ZSH_PLUGIN_DIR"
     
@@ -43,7 +52,7 @@ install_zsh_plugins() {
     done
 }
 
-# 生成强力 ~/.zshrc 环境配置项
+# 生成强力 ~/.zshrc 环境配置项 (跨平台：自动适配 Linux/macOS 插件路径)
 generate_zshrc() {
     info "正在配置您的终端环境变量 ~/.zshrc ..."
     ZSHRC_FILE="$HOME/.zshrc"
@@ -53,7 +62,19 @@ generate_zshrc() {
         cp "$ZSHRC_FILE" "${ZSHRC_FILE}.bak_$(date +%Y%m%d%H%M)"
     fi
     
-cat << 'EOF' > "$ZSHRC_FILE"
+    # 清理可能的旧配置块 (防止重复运行写入多份)
+    if [ -f "$ZSHRC_FILE" ]; then
+        if [ "$(uname -s)" = "Darwin" ]; then
+            sed -i '' '/# === AD_ENGINEER ZSHRC START ===/,/# === AD_ENGINEER ZSHRC END ===/d' "$ZSHRC_FILE" 2>/dev/null || true
+        else
+            sed -i '/# === AD_ENGINEER ZSHRC START ===/,/# === AD_ENGINEER ZSHRC END ===/d' "$ZSHRC_FILE" 2>/dev/null || true
+        fi
+    fi
+    
+    touch "$ZSHRC_FILE"
+    
+cat << 'EOF' >> "$ZSHRC_FILE"
+# === AD_ENGINEER ZSHRC START ===
 # =====================================
 # 🚀 自动驾驶/算法工程师 纯净极速配置档
 # =====================================
@@ -63,7 +84,14 @@ export HISTSIZE=100000
 export SAVEHIST=100000
 setopt appendhistory share_history hist_ignore_all_dups inc_append_history
 
-# BATcat / EZA aliases
+# ---------- 自动补全系统 ----------
+# macOS brew-native zsh-completions 支持
+if [ -d "$(brew --prefix 2>/dev/null)/share/zsh-completions" ]; then
+    FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
+fi
+autoload -Uz compinit && compinit
+
+# ---------- EZA / BAT 现代化别名 ----------
 if command -v batcat &> /dev/null; then
     alias cat="batcat"
 elif command -v bat &> /dev/null; then
@@ -71,25 +99,43 @@ elif command -v bat &> /dev/null; then
 fi
 
 if command -v eza &> /dev/null; then
-    alias ls="eza --icons -F"
-    alias ll="eza --icons -F -l -h --git"
-    alias tree="eza --tree --icons"
+    alias ls="eza --color=always --icons=always -F -H --group-directories-first --git"
+    alias ll="eza -al --color=always --icons=always -F -H --group-directories-first --git"
+    alias tree="eza --tree --icons=always"
 elif command -v exa &> /dev/null; then
     alias ls="exa --icons -F"
     alias ll="exa --icons -F -l -h --git"
 fi
 
-alias rm='rm -i' cp='cp -i' mv='mv -i' n='nvidia-smi' nn='watch -n 1 nvidia-smi'
+alias rm='rm -i' cp='cp -i' mv='mv -i'
+# nvidia-smi 快捷键 (仅 Linux 有效)
+if command -v nvidia-smi &> /dev/null; then
+    alias n='nvidia-smi' nn='watch -n 1 nvidia-smi'
+fi
 
-# 核心插件加载
-source ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev/null
+# ---------- 核心插件加载 (自动适配 brew-native 或 git-clone 路径) ----------
+_load_zsh_plugin() {
+    local plugin_name="$1"
+    local plugin_file="$2"
+    # 优先级 1: brew-native 路径 (macOS)
+    local brew_path
+    brew_path="$(brew --prefix 2>/dev/null)/share/${plugin_name}/${plugin_file}" 2>/dev/null
+    if [ -f "$brew_path" ]; then
+        source "$brew_path"
+        return 0
+    fi
+    # 优先级 2: git-clone 路径 (Linux)
+    local git_path="$HOME/.zsh/plugins/${plugin_name}/${plugin_file}"
+    if [ -f "$git_path" ]; then
+        source "$git_path"
+        return 0
+    fi
+}
+
+_load_zsh_plugin "zsh-autosuggestions" "zsh-autosuggestions.zsh"
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#8c8c8c"
-source ~/.zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null
-source ~/.zsh/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh 2>/dev/null
-bindkey '^[[A' history-substring-search-up
-bindkey '^[[B' history-substring-search-down
 
-# Rust 工具链补全加载
+# ---------- Rust 工具链初始化 ----------
 if command -v zoxide &> /dev/null; then
     eval "$(zoxide init zsh)"
     alias cd="z"
@@ -100,6 +146,16 @@ fi
 if command -v starship &> /dev/null; then
     eval "$(starship init zsh)"
 fi
+
+# history-substring-search 绑定
+_load_zsh_plugin "zsh-history-substring-search" "zsh-history-substring-search.zsh"
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+
+# ⚠️ syntax-highlighting 必须严格放在 .zshrc 最后加载
+_load_zsh_plugin "zsh-syntax-highlighting" "zsh-syntax-highlighting.zsh"
+
+# === AD_ENGINEER ZSHRC END ===
 EOF
 }
 
@@ -152,11 +208,12 @@ switch_default_shell() {
         echo "  -> [跳过] 原生 /etc/passwd 默认 Shell 已经是 zsh"
     fi
     
-    # 2. [防弹级别] 为防止 chsh 因权限或 PAM 认证失效导致重启后依旧是 bash，注入一个兼容跳板到 .bashrc
-    local bashrc_file="$HOME/.bashrc"
-    if [ -f "$bashrc_file" ] && ! grep -q "exec \"$zsh_path\"" "$bashrc_file"; then
-        info "正在为 ~/.bashrc 注入防弹级别的 Zsh 自动跳转保护逻辑..."
-        cat << EOF >> "$bashrc_file"
+    # 2. [防弹级别] 为防止 chsh 因权限或 PAM 认证失效导致重启后依旧是 bash，注入一个兼容跳板到 .bashrc (仅 Linux)
+    if [ "$(uname -s)" = "Linux" ]; then
+        local bashrc_file="$HOME/.bashrc"
+        if [ -f "$bashrc_file" ] && ! grep -q "exec \"$zsh_path\"" "$bashrc_file"; then
+            info "正在为 ~/.bashrc 注入防弹级别的 Zsh 自动跳转保护逻辑..."
+            cat << EOF >> "$bashrc_file"
 
 # ==========================================
 # 🚀 自动驾驶/算法工程师: Zsh 终端强绑定防弹方案
@@ -166,5 +223,6 @@ if [[ \$- == *i* ]] && [ -x "$zsh_path" ] && [ "\$SHELL" != "$zsh_path" ] && [ "
     exec "$zsh_path" -l
 fi
 EOF
+        fi
     fi
 }
